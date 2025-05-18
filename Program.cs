@@ -1,78 +1,124 @@
-// ===============================
-// Project: Student Management System
-// Language: C# (WinForms/Console)
-// Database: SQLite
-// ===============================
-
 using System;
 using System.Collections.Generic;
-using System.Data.SQLite;
 
-public class Student
+namespace LibraryManagementApp
 {
-    public int Id { get; set; }
-    public string Name { get; set; }
-    public string Department { get; set; }
-    public int Year { get; set; }
-}
-
-public class StudentDatabase
-{
-    private const string connectionString = "Data Source=students.db";
-
-    public static void Initialize()
+    // Book class with non-nullable properties initialized
+    public class Book
     {
-        using var conn = new SQLiteConnection(connectionString);
-        conn.Open();
-        string sql = "CREATE TABLE IF NOT EXISTS Students (Id INTEGER PRIMARY KEY AUTOINCREMENT, Name TEXT, Department TEXT, Year INTEGER)";
-        new SQLiteCommand(sql, conn).ExecuteNonQuery();
-    }
+        public string Title { get; set; } = string.Empty;
+        public string Author { get; set; } = string.Empty;
 
-    public static void AddStudent(Student s)
-    {
-        using var conn = new SQLiteConnection(connectionString);
-        conn.Open();
-        var cmd = new SQLiteCommand("INSERT INTO Students (Name, Department, Year) VALUES (@Name, @Department, @Year)", conn);
-        cmd.Parameters.AddWithValue("@Name", s.Name);
-        cmd.Parameters.AddWithValue("@Department", s.Department);
-        cmd.Parameters.AddWithValue("@Year", s.Year);
-        cmd.ExecuteNonQuery();
-    }
-
-    public static List<Student> GetAllStudents()
-    {
-        var list = new List<Student>();
-        using var conn = new SQLiteConnection(connectionString);
-        conn.Open();
-        var cmd = new SQLiteCommand("SELECT * FROM Students", conn);
-        using var reader = cmd.ExecuteReader();
-        while (reader.Read())
+        public Book(string title, string author)
         {
-            list.Add(new Student
-            {
-                Id = Convert.ToInt32(reader["Id"]),
-                Name = reader["Name"].ToString(),
-                Department = reader["Department"].ToString(),
-                Year = Convert.ToInt32(reader["Year"])
-            });
+            Title = title;
+            Author = author;
         }
-        return list;
     }
-}
 
-public class Program
-{
-    public static void Main()
+    class Program
     {
-        StudentDatabase.Initialize();
+        // List to store books
+        static List<Book> books = new List<Book>();
 
-        var student = new Student { Name = "Alice", Department = "CSE", Year = 2 };
-        StudentDatabase.AddStudent(student);
-
-        var allStudents = StudentDatabase.GetAllStudents();
-        foreach (var s in allStudents)
+        static void Main()
         {
-            Console.WriteLine($"ID: {s.Id}, Name: {s.Name}, Dept: {s.Department}, Year: {s.Year}");
+            bool running = true;
+
+            while (running)
+            {
+                Console.WriteLine("\nLibrary Management System");
+                Console.WriteLine("1. Add Book");
+                Console.WriteLine("2. View Books");
+                Console.WriteLine("3. Search Book");
+                Console.WriteLine("4. Exit");
+                Console.Write("Choose an option: ");
+
+                string? choice = Console.ReadLine();
+
+                switch (choice)
+                {
+                    case "1":
+                        AddBook();
+                        break;
+                    case "2":
+                        ViewBooks();
+                        break;
+                    case "3":
+                        SearchBook();
+                        break;
+                    case "4":
+                        running = false;
+                        break;
+                    default:
+                        Console.WriteLine("Invalid option, try again.");
+                        break;
+                }
+            }
+        }
+
+        static void AddBook()
+        {
+            Console.Write("Enter Book Title: ");
+            string? title = Console.ReadLine();
+            if (string.IsNullOrWhiteSpace(title))
+            {
+                Console.WriteLine("Title cannot be empty.");
+                return;
+            }
+
+            Console.Write("Enter Author Name: ");
+            string? author = Console.ReadLine();
+            if (string.IsNullOrWhiteSpace(author))
+            {
+                Console.WriteLine("Author cannot be empty.");
+                return;
+            }
+
+            Book newBook = new Book(title, author);
+            books.Add(newBook);
+            Console.WriteLine($"Book '{title}' by {author} added successfully.");
+        }
+
+        static void ViewBooks()
+        {
+            if (books.Count == 0)
+            {
+                Console.WriteLine("No books available.");
+                return;
+            }
+
+            Console.WriteLine("\nList of Books:");
+            foreach (var book in books)
+            {
+                Console.WriteLine($"- {book.Title} by {book.Author}");
+            }
+        }
+
+        static void SearchBook()
+        {
+            Console.Write("Enter book title to search: ");
+            string? searchTitle = Console.ReadLine();
+            if (string.IsNullOrWhiteSpace(searchTitle))
+            {
+                Console.WriteLine("Search term cannot be empty.");
+                return;
+            }
+
+            var foundBooks = books.FindAll(b => b.Title.IndexOf(searchTitle, StringComparison.OrdinalIgnoreCase) >= 0);
+
+            if (foundBooks.Count == 0)
+            {
+                Console.WriteLine("No books found with that title.");
+            }
+            else
+            {
+                Console.WriteLine("\nSearch Results:");
+                foreach (var book in foundBooks)
+                {
+                    Console.WriteLine($"- {book.Title} by {book.Author}");
+                }
+            }
         }
     }
 }
